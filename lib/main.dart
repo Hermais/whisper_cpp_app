@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart' show rootBundle;
-import 'package:path_provider/path_provider.dart';
-import 'dart:io';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'logic/cubit/transcription_cubit.dart';
+import 'services/audio_service.dart';
 import 'services/whisper_service.dart';
+import 'widgets/recording_controls.dart';
 
 void main() {
   runApp(const MyApp());
@@ -19,130 +20,84 @@ class MyApp extends StatelessWidget {
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.blue),
         useMaterial3: true,
       ),
-      home: const MyHomePage(title: 'Whisper FFI Demo'),
+      // Provide both services to the TranscriptionCubit
+      home: BlocProvider(
+        create: (context) => TranscriptionCubit(WhisperService(), AudioService()),
+        child: const MyHomePage(title: 'Whisper FFI Demo'),
+      ),
     );
   }
 }
 
-// Enum to represent the state of the transcription process
-enum TranscriptionState {
-  initializing,
-  loading,
-  transcribing,
-  success,
-  error,
-}
-
-class MyHomePage extends StatefulWidget {
+class MyHomePage extends StatelessWidget {
   const MyHomePage({super.key, required this.title});
 
   final String title;
-
-  @override
-  State<MyHomePage> createState() => _MyHomePageState();
-}
-
-class _MyHomePageState extends State<MyHomePage> {
-  final WhisperService _whisperService = WhisperService();
-  TranscriptionState _state = TranscriptionState.initializing;
-  String _transcription = '';
-  String _errorMessage = '';
-
-  @override
-  void initState() {
-    super.initState();
-    _initializeAndTranscribe();
-  }
-
-  @override
-  void dispose() {
-    _whisperService.dispose(); // Clean up native resources
-    super.dispose();
-  }
-
-  Future<void> _initializeAndTranscribe() async {
-    try {
-      // Initialize the service
-      setState(() => _state = TranscriptionState.initializing);
-      await _whisperService.initialize();
-
-      // Prepare the audio file asset
-      setState(() => _state = TranscriptionState.loading);
-      final audioPath = await _getPathFromAsset('assets/test.wav');
-
-      // Start transcription
-      setState(() => _state = TranscriptionState.transcribing);
-      final result = await _whisperService.transcribe(audioPath);
-
-      // Show result
-      setState(() {
-        _transcription = result;
-        _state = TranscriptionState.success;
-      });
-    } catch (e) {
-      // Handle errors
-      setState(() {
-        _errorMessage = e.toString();
-        _state = TranscriptionState.error;
-      });
-    }
-  }
-
-  /// Helper function to copy an asset to a temporary file.
-  Future<String> _getPathFromAsset(String asset) async {
-    final byteData = await rootBundle.load(asset);
-    final buffer = byteData.buffer;
-    final directory = await getApplicationDocumentsDirectory();
-    final path = '${directory.path}/${asset.split('/').last}';
-    await File(path).writeAsBytes(
-        buffer.asUint8List(byteData.offsetInBytes, byteData.lengthInBytes));
-    return path;
-  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         backgroundColor: Theme.of(context).colorScheme.inversePrimary,
-        title: Text(widget.title),
+        title: Text(title),
       ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Center(
-          child: _buildContent(),
+          child: BlocBuilder<TranscriptionCubit, TranscriptionState>(
+            builder: (context, state) {
+              if (state is TranscriptionLoading) {
+                return _buildStatusIndicator(context, state.message);
+              } else if (state is TranscriptionSuccess) {
+                return _buildResultView(context, state.transcription);
+              } else if (state is TranscriptionError) {
+                return _buildResultView(context, state.message, isError: true);
+              } else if (state is Recording) {
+                return _buildStatusIndicator(context, 'Recording...', showControls: true);
+              } else if (state is PlaybackInProgress) {
+                return _buildStatusIndicator(context, 'Playing back...', showControls: true);
+              }
+              // For Initial, RecordingStopped, and others, show the main controls.
+              return _buildRecordingView(context);
+            },
+          ),
         ),
       ),
     );
   }
 
-  /// Builds the main content based on the current transcription state.
-  Widget _buildContent() {
-    switch (_state) {
-      case TranscriptionState.initializing:
-        return _buildStatusIndicator('Initializing Whisper...');
-      case TranscriptionState.loading:
-        return _buildStatusIndicator('Loading audio file...');
-      case TranscriptionState.transcribing:
-        return _buildStatusIndicator('Transcribing...');
-      case TranscriptionState.success:
-        return _buildResultView(_transcription);
-      case TranscriptionState.error:
-        return _buildResultView(_errorMessage, isError: true);
-    }
+  Widget _buildRecordingView(BuildContext context) {
+    return const Column(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        Expanded(
+          child: Center(
+            child: Text('Press the record button to start recording.'),
+          ),
+        ),
+        RecordingControls(),
+        SizedBox(height: 20),
+      ],
+    );
   }
 
-  Widget _buildStatusIndicator(String text) {
+  Widget _buildStatusIndicator(BuildContext context, String text, {bool showControls = false}) {
     return Column(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
         const CircularProgressIndicator(),
         const SizedBox(height: 20),
         Text(text),
+        if (showControls) ...[
+          const Spacer(),
+          const RecordingControls(),
+          const SizedBox(height: 20),
+        ],
       ],
     );
   }
 
-  Widget _buildResultView(String text, {bool isError = false}) {
+  Widget _buildResultView(BuildContext context, String text, {bool isError = false}) {
     return Column(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
@@ -162,6 +117,9 @@ class _MyHomePageState extends State<MyHomePage> {
             ),
           ),
         ),
+        const SizedBox(height: 20),
+        const RecordingControls(),
+        const SizedBox(height: 20),
       ],
     );
   }
