@@ -1,6 +1,92 @@
 import 'dart:ffi';
 import 'package:ffi/ffi.dart';
 
+
+// lib/ffi/whisper_bindings.dart - Add this class at the end of the file
+
+class WhisperBindings {
+  final DynamicLibrary _dylib;
+
+  WhisperBindings(this._dylib);
+
+  // Function to initialize the whisper context from a file
+  Pointer<WhisperContext> whisper_init_from_file_with_params(
+      Pointer<Utf8> path, WhisperContextParams params) {
+    return _dylib
+        .lookupFunction<
+        Pointer<WhisperContext> Function(
+            Pointer<Utf8>, WhisperContextParams),
+        Pointer<WhisperContext> Function(
+            Pointer<Utf8>, WhisperContextParams)>(
+        'whisper_init_from_file_with_params')
+        .call(path, params);
+  }
+
+  // Get default context parameters
+  WhisperContextParams whisper_context_default_params() {
+    return _dylib
+        .lookupFunction<WhisperContextParams Function(),
+        WhisperContextParams Function()>(
+        'whisper_context_default_params')
+        .call();
+  }
+
+  // Get default full parameters
+  WhisperFullParams whisper_full_default_params(int strategy) {
+    return _dylib
+        .lookupFunction<WhisperFullParams Function(Int32),
+        WhisperFullParams Function(int)>(
+        'whisper_full_default_params')
+        .call(strategy);
+  }
+
+  // Run parallel inference
+  int whisper_full_parallel(
+      Pointer<WhisperContext> ctx,
+      WhisperFullParams params,
+      Pointer<Float> samples,
+      int n_samples,
+      int n_processors) {
+    return _dylib
+        .lookupFunction<
+        Int32 Function(Pointer<WhisperContext>, WhisperFullParams,
+            Pointer<Float>, Int32, Int32),
+        int Function(Pointer<WhisperContext>, WhisperFullParams,
+            Pointer<Float>, int, int)>(
+        'whisper_full_parallel')
+        .call(ctx, params, samples, n_samples, n_processors);
+  }
+
+  // Get number of segments
+  int whisper_full_n_segments(Pointer<WhisperContext> ctx) {
+    return _dylib
+        .lookupFunction<Int32 Function(Pointer<WhisperContext>),
+        int Function(Pointer<WhisperContext>)>(
+        'whisper_full_n_segments')
+        .call(ctx);
+  }
+
+  // Get text for a segment
+  Pointer<Utf8> whisper_full_get_segment_text(
+      Pointer<WhisperContext> ctx, int i) {
+    return _dylib
+        .lookupFunction<
+        Pointer<Utf8> Function(Pointer<WhisperContext>, Int32),
+        Pointer<Utf8> Function(Pointer<WhisperContext>, int)>(
+        'whisper_full_get_segment_text')
+        .call(ctx, i);
+  }
+
+  // Free the whisper context
+  void whisper_free(Pointer<WhisperContext> ctx) {
+    _dylib
+        .lookupFunction<Void Function(Pointer<WhisperContext>),
+        void Function(Pointer<WhisperContext>)>(
+        'whisper_free')
+        .call(ctx);
+  }
+}
+
 // This file contains the direct Dart-to-C mappings based on the whisper.h header file.
 // You should not need to modify this file unless the underlying C++ library changes.
 

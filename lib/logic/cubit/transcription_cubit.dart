@@ -93,7 +93,6 @@ class TranscriptionCubit extends Cubit<TranscriptionState> {
 
   @override
   Future<void> close() {
-    _whisperService.dispose();
     _audioService.dispose();
     return super.close();
   }

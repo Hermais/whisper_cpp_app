@@ -6,6 +6,8 @@ import 'services/whisper_service.dart';
 import 'widgets/recording_controls.dart';
 
 void main() {
+  // bindings initialization
+  WidgetsFlutterBinding.ensureInitialized();
   runApp(const MyApp());
 }
 
@@ -17,7 +19,7 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       title: 'Whisper Demo',
       theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.blue),
+        colorScheme: ColorScheme.fromSeed(seedColor: Colors.red),
         useMaterial3: true,
       ),
       // Provide both services to the TranscriptionCubit

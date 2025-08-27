@@ -1,3 +1,4 @@
+// lib/logic/models/transcription_state.dart
 part of '../cubit/transcription_cubit.dart';
 
 abstract class TranscriptionState extends Equatable {

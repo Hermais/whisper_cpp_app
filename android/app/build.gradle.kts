@@ -16,6 +16,13 @@ android {
         targetCompatibility = JavaVersion.VERSION_11
     }
 
+    // ADD THIS BLOCK
+    sourceSets {
+        getByName("main") {
+            jniLibs.srcDirs("src/main/jniLibs")
+        }
+    }
+
     kotlinOptions {
         jvmTarget = JavaVersion.VERSION_11.toString()
     }
@@ -30,12 +37,35 @@ android {
         versionCode = flutter.versionCode
         versionName = flutter.versionName
     }
+    /*
+    // --- ADD THIS SECTION ---
+    flavorDimensions.add("app")
+    productFlavors {
+        create("dev") {
+            dimension = "app"
+            applicationIdSuffix = ".dev"
+            versionNameSuffix = "-dev"
+        }
+        create("prod") {
+            dimension = "app"
+            // This will use the default applicationId from defaultConfig
+        }
+    }
+    // --- END OF ADDED SECTION ---
+*/
 
+
+    // In android/app/build.gradle.kts
     buildTypes {
-        release {
-            // TODO: Add your own signing config for the release build.
-            // Signing with the debug keys for now, so `flutter run --release` works.
-            signingConfig = signingConfigs.getByName("debug")
+        getByName("release") {
+            isMinifyEnabled = false
+            isShrinkResources = false
+
+            // This line links your rules file to the release build
+            proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
+
+            // Make sure you have a signing config
+            signingConfig = signingConfigs.getByName("debug") // Or your custom release config
         }
     }
 }
