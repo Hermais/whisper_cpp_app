@@ -33,7 +33,6 @@ The application is currently in a proof-of-concept stage. It has been tested on 
 ## Future Plans
 
 * **UI/UX Enhancements:** The user interface will be improved to provide a more polished and user-friendly experience. This includes adding animations, improving the layout, and providing more visual feedback to the user.
-* **iOS Support:** The project will be extended to support iOS devices by compiling `whisper.cpp` for ARM64 and integrating the resulting static library.
 * **Model Selection:** Users will be able to choose from different Whisper models (e.g., tiny, base, small) to balance performance and accuracy.
 * **Language Selection:** The app will support transcription in multiple languages.
 * **Real-time Visualization:** The app will display the transcribed text in real-time as the user is speaking.
