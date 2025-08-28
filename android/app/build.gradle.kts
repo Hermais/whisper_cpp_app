@@ -37,7 +37,7 @@ android {
         versionCode = flutter.versionCode
         versionName = flutter.versionName
     }
-    /*
+
     // --- ADD THIS SECTION ---
     flavorDimensions.add("app")
     productFlavors {
@@ -52,7 +52,7 @@ android {
         }
     }
     // --- END OF ADDED SECTION ---
-*/
+
 
 
     // In android/app/build.gradle.kts

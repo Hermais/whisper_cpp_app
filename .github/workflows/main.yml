@@ -25,7 +25,7 @@ jobs:
       - name: Set up Flutter
         uses: subosito/flutter-action@v2
         with:
-          flutter-version: '3.29.2' 
+          flutter-version: '3.29.2'
           channel: 'stable'
           cache: true
 
@@ -36,14 +36,16 @@ jobs:
         run: echo "${{ secrets.KEYSTORE_BASE64 }}" | base64 --decode > android/app/keystore.jks
 
       - name: Build and Sign APK
-        run: flutter build apk --release
+        # Added the --flavor prod flag
+        run: flutter build apk --release --flavor prod
         env:
           KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
           KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
           STORE_PASSWORD: ${{ secrets.STORE_PASSWORD }}
 
       - name: Build and Sign App Bundle
-        run: flutter build appbundle --release
+        # Added the --flavor prod flag
+        run: flutter build appbundle --release --flavor prod
         env:
           KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
           KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
@@ -53,10 +55,12 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: release-apk
-          path: build/app/outputs/flutter-apk/app-release.apk
+          # Updated the path to include the flavor name
+          path: build/app/outputs/flutter-apk/app-prod-release.apk
 
       - name: Upload App Bundle
         uses: actions/upload-artifact@v4
         with:
           name: release-appbundle
-          path: build/app/outputs/bundle/release/app-release.aab
+          # Updated the path to include the flavor name
+          path: build/app/outputs/bundle/prodRelease/app-prod-release.aab
