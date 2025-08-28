@@ -2,9 +2,9 @@ name: Build Flutter App
 
 on:
   push:
-    branches: [ "master" ]
-  pull_request:
-    branches: [ "master" ]
+    # This workflow now runs ONLY when you push a tag like v1.0.0, v1.2.5, etc.
+    tags:
+      - 'v*'
 
   workflow_dispatch:
 
@@ -36,7 +36,6 @@ jobs:
         run: echo "${{ secrets.KEYSTORE_BASE64 }}" | base64 --decode > android/app/keystore.jks
 
       - name: Build and Sign APK
-        # Added the --flavor prod flag
         run: flutter build apk --release --flavor prod
         env:
           KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
@@ -44,23 +43,21 @@ jobs:
           STORE_PASSWORD: ${{ secrets.STORE_PASSWORD }}
 
       - name: Build and Sign App Bundle
-        # Added the --flavor prod flag
         run: flutter build appbundle --release --flavor prod
         env:
           KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
           KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
           STORE_PASSWORD: ${{ secrets.STORE_PASSWORD }}
 
-      - name: Upload APK
-        uses: actions/upload-artifact@v4
+      # The two 'upload-artifact' steps have been removed and replaced with the step below.
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
         with:
-          name: release-apk
-          # Updated the path to include the flavor name
-          path: build/app/outputs/flutter-apk/app-prod-release.apk
-
-      - name: Upload App Bundle
-        uses: actions/upload-artifact@v4
-        with:
-          name: release-appbundle
-          # Updated the path to include the flavor name
-          path: build/app/outputs/bundle/prodRelease/app-prod-release.aab
+          # This creates a release with the same name as the tag you pushed
+          tag_name: ${{ github.ref_name }}
+          # This sets the title of the release
+          name: Release ${{ github.ref_name }}
+          # This attaches both your APK and AAB files to the release
+          files: |
+            build/app/outputs/flutter-apk/app-prod-release.apk
+            build/app/outputs/bundle/prodRelease/app-prod-release.aab
