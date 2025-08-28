@@ -2,11 +2,14 @@ name: Build Flutter App
 
 on:
   push:
-    # This workflow now runs ONLY when you push a tag like v1.0.0, v1.2.5, etc.
     tags:
       - 'v*'
 
   workflow_dispatch:
+
+
+permissions:
+  contents: write
 
 jobs:
   build:
@@ -49,15 +52,11 @@ jobs:
           KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
           STORE_PASSWORD: ${{ secrets.STORE_PASSWORD }}
 
-      # The two 'upload-artifact' steps have been removed and replaced with the step below.
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
-          # This creates a release with the same name as the tag you pushed
           tag_name: ${{ github.ref_name }}
-          # This sets the title of the release
           name: Release ${{ github.ref_name }}
-          # This attaches both your APK and AAB files to the release
           files: |
             build/app/outputs/flutter-apk/app-prod-release.apk
             build/app/outputs/bundle/prodRelease/app-prod-release.aab
